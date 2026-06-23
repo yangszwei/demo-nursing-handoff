@@ -12,8 +12,8 @@
         <div class="brand-mark">
           <span class="brand-icon" aria-hidden="true">AI</span>
           <div>
-            <strong>AI Handoff</strong>
-            <span>Risk Console</span>
+            <strong>護理交班風險辨識</strong>
+            <span>示範系統</span>
           </div>
         </div>
 
@@ -34,7 +34,6 @@
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="section-kicker">NIS 交班頁嵌入示範</p>
             <h1>AI 輔助護理交班風險辨識</h1>
           </div>
           <div class="top-actions">
@@ -73,7 +72,6 @@
             <section class="panel patient-panel" aria-label="病人清單">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Patients</p>
                   <h2>病人清單</h2>
                 </div>
                 <span id="patientCount" class="count-pill">0</span>
@@ -84,25 +82,32 @@
             <section class="patient-detail" aria-live="polite">
               <div class="detail-hero">
                 <div>
-                  <p class="panel-label">Selected Patient</p>
                   <h2 id="patientName">-</h2>
                   <div id="patientMeta" class="meta-line"></div>
                 </div>
                 <div id="riskBadge" class="risk-badge">-</div>
               </div>
 
+              <section class="priority-panel" aria-label="接班優先事項">
+                <div class="priority-heading">
+                  <h2>接班優先事項</h2>
+                  <span id="prioritySummary">-</span>
+                </div>
+                <div id="priorityList" class="priority-list"></div>
+              </section>
+
               <section class="summary-grid" aria-label="臨床摘要">
-                <article class="metric-card">
+                <article class="metric-card" id="vitalCard">
                   <span>生命徵象</span>
                   <strong id="vitalMetric">-</strong>
                   <small id="vitalTrend">-</small>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card" id="labCard">
                   <span>檢驗</span>
                   <strong id="labMetric">-</strong>
                   <small id="labTrend">-</small>
                 </article>
-                <article class="metric-card">
+                <article class="metric-card" id="medCard">
                   <span>用藥</span>
                   <strong id="medMetric">-</strong>
                   <small id="medTrend">-</small>
@@ -112,7 +117,6 @@
               <section class="panel flow-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-label">Risk Timeline</p>
                     <h2>風險時間軸</h2>
                   </div>
                   <button id="simulateUpdate" class="icon-button" type="button" aria-label="模擬新資料">↻</button>
@@ -123,17 +127,16 @@
               <section class="panel draft-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-label">AI Draft</p>
                     <h2>AI 交班摘要草稿</h2>
                   </div>
                   <div id="draftState" class="state-chip">待確認</div>
                 </div>
                 <textarea id="draftText" spellcheck="false"></textarea>
                 <div class="draft-actions">
-                  <button id="confirmDraft" class="primary-button" type="button">Confirm</button>
-                  <button id="editDraft" class="secondary-button" type="button">Edit</button>
+                  <button id="confirmDraft" class="primary-button" type="button">確認摘要</button>
+                  <button id="editDraft" class="secondary-button" type="button">編輯</button>
                   <button id="rejectDraft" class="danger-button" type="button">退回</button>
-                  <button id="sendDraft" class="send-button" type="button">Send to NIS</button>
+                  <button id="sendDraft" class="send-button" type="button">送出至 NIS</button>
                 </div>
               </section>
             </section>
@@ -142,7 +145,6 @@
               <section class="panel source-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-label">Sources</p>
                     <h2>來源追蹤</h2>
                   </div>
                 </div>
@@ -152,7 +154,6 @@
               <section class="panel rule-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-label">Rules</p>
                     <h2>命中規則</h2>
                   </div>
                 </div>
@@ -162,7 +163,6 @@
               <section class="panel audit-panel">
                 <div class="panel-heading">
                   <div>
-                    <p class="panel-label">Audit Trail</p>
                     <h2>稽核紀錄</h2>
                   </div>
                 </div>
@@ -177,7 +177,6 @@
             <section class="panel data-panel wide-panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Sources</p>
                   <h2>來源資料總覽</h2>
                 </div>
                 <span id="sourceTotal" class="count-pill">0</span>
@@ -201,7 +200,6 @@
             <aside class="panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Data Quality</p>
                   <h2>資料品質</h2>
                 </div>
               </div>
@@ -215,7 +213,6 @@
             <section class="panel data-panel wide-panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Audit Trail</p>
                   <h2>稽核事件</h2>
                 </div>
                 <span id="auditTotal" class="count-pill">0</span>
@@ -239,7 +236,6 @@
             <aside class="panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Governance</p>
                   <h2>治理狀態</h2>
                 </div>
               </div>
@@ -253,7 +249,6 @@
             <section class="panel data-panel wide-panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Rules</p>
                   <h2>臨床規則庫</h2>
                 </div>
                 <span id="ruleTotal" class="count-pill">0</span>
@@ -264,7 +259,6 @@
             <aside class="panel">
               <div class="panel-heading">
                 <div>
-                  <p class="panel-label">Rule Hits</p>
                   <h2>本班命中分布</h2>
                 </div>
               </div>
@@ -275,7 +269,6 @@
       </main>
     </div>
 
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="./app.js"></script>
   </body>
 </html>

@@ -13,6 +13,11 @@ const seedPatients = [
     labTrend: "CRP 上升，培養待回",
     meds: "抗生素 D2",
     medTrend: "高警訊：氧氣治療調整",
+    attention: ["vital", "lab"],
+    priorities: [
+      ["critical", "先確認氧氣需求與呼吸型態", "SpO₂ 91%，近 6 小時下降 4%，低於 92% 需優先處理。"],
+      ["watch", "追蹤感染指標與培養結果", "WBC 15.2、CRP 持續上升，需接續抗生素療程。"],
+    ],
     draft:
       "病人肺炎治療中，近 6 小時 SpO₂ 由 95% 下降至 91%，目前鼻導管氧氣 3 L/min。WBC 15.2、CRP 持續上升，血液培養待回。請接班後優先確認呼吸型態、氧氣需求與抗生素給藥時間，若 SpO₂ 持續低於 92% 請依病房流程通知醫師。",
     timeline: [
@@ -45,6 +50,11 @@ const seedPatients = [
     labTrend: "飯後偏高",
     meds: "Insulin sliding scale",
     medTrend: "需確認餐前血糖",
+    attention: ["lab", "med"],
+    priorities: [
+      ["watch", "確認 06:00 血糖與胰島素處置", "飯後血糖 238 mg/dL，需避免夜間與清晨血糖波動。"],
+      ["routine", "觀察傷口滲液與疼痛", "換藥後滲液減少，但仍有微燒需追蹤。"],
+    ],
     draft:
       "病人糖尿病足感染治療中，傷口換藥後滲液較昨日減少，但晚間體溫 37.8°C。飯後血糖 238 mg/dL，已依 sliding scale 給藥。請接班後確認 06:00 血糖、傷口疼痛與滲液狀況，並追蹤抗生素下一次給藥。",
     timeline: [
@@ -74,6 +84,10 @@ const seedPatients = [
     labTrend: "無明顯變化",
     meds: "止痛 PRN",
     medTrend: "本班未使用",
+    attention: [],
+    priorities: [
+      ["routine", "維持跌倒預防措施", "生命徵象穩定，接班後重點為協助下床與夜間安全。"],
+    ],
     draft:
       "病人跌倒後觀察中，本班生命徵象穩定，無頭暈、嘔吐或意識改變。疼痛 2/10，本班未使用 PRN 止痛藥。請接班後持續執行跌倒預防措施，協助下床並追蹤夜間疼痛。",
     timeline: [
@@ -102,6 +116,11 @@ const seedPatients = [
     labTrend: "低血鉀",
     meds: "Furosemide IV",
     medTrend: "需追蹤尿量與電解質",
+    attention: ["vital", "lab", "med"],
+    priorities: [
+      ["critical", "優先追蹤呼吸喘與尿量", "RR 26/min，利尿後仍喘，需觀察呼吸狀態與輸出入量。"],
+      ["critical", "確認低血鉀處置是否完成", "K 3.1 且使用利尿劑，需追蹤補鉀醫囑與心律風險。"],
+    ],
     draft:
       "病人心衰竭急性惡化，使用 Furosemide IV 後尿量增加，但夜間呼吸喘仍明顯，RR 26/min。K 3.1，已通知醫師並等待補鉀醫囑。請接班後優先追蹤呼吸狀態、尿量、體重與電解質回報，並確認補鉀處置是否完成。",
     timeline: [
@@ -123,9 +142,9 @@ const seedPatients = [
 ];
 
 const riskLabels = {
-  high: "High Risk",
-  medium: "Medium Risk",
-  low: "Low Risk",
+  high: "高風險",
+  medium: "中風險",
+  low: "低風險",
 };
 
 const state = {
@@ -152,6 +171,11 @@ const el = {
   labTrend: document.querySelector("#labTrend"),
   medMetric: document.querySelector("#medMetric"),
   medTrend: document.querySelector("#medTrend"),
+  prioritySummary: document.querySelector("#prioritySummary"),
+  priorityList: document.querySelector("#priorityList"),
+  vitalCard: document.querySelector("#vitalCard"),
+  labCard: document.querySelector("#labCard"),
+  medCard: document.querySelector("#medCard"),
   timeline: document.querySelector("#timeline"),
   draftText: document.querySelector("#draftText"),
   draftState: document.querySelector("#draftState"),
@@ -162,7 +186,6 @@ const el = {
   sourceList: document.querySelector("#sourceList"),
   ruleHits: document.querySelector("#ruleHits"),
   auditTrail: document.querySelector("#auditTrail"),
-  toast: document.querySelector("#toast"),
   onlyUnconfirmed: document.querySelector("#onlyUnconfirmed"),
   timeRange: document.querySelector("#timeRange"),
   syncStatus: document.querySelector("#syncStatus"),
@@ -252,7 +275,7 @@ function renderPatients() {
             </div>
             <span class="risk-dot risk-${patient.risk}" title="${riskLabels[patient.risk]}"></span>
           </header>
-          <div class="row-meta">${riskLabels[patient.risk]} · ${patient.confirmed ? "已確認" : "待確認"} · ${patient.nurse}</div>
+          <div class="row-meta">${patient.age} 歲 · ${patient.nurse} · ${patient.confirmed ? "已確認" : "待確認"}</div>
         </button>
       `,
     )
@@ -278,6 +301,8 @@ function renderDetail() {
   el.labTrend.textContent = patient.labTrend;
   el.medMetric.textContent = patient.meds;
   el.medTrend.textContent = patient.medTrend;
+  renderPriorities(patient);
+  renderAttentionCards(patient);
 
   el.timeline.innerHTML = patient.timeline
     .map(
@@ -300,6 +325,41 @@ function renderDetail() {
   renderAudit(patient);
 }
 
+function renderPriorities(patient) {
+  const criticalCount = patient.priorities.filter(([level]) => level === "critical").length;
+  const watchCount = patient.priorities.filter(([level]) => level === "watch").length;
+  el.prioritySummary.textContent =
+    criticalCount > 0
+      ? `${criticalCount} 項需優先處理`
+      : watchCount > 0
+        ? `${watchCount} 項需交班追蹤`
+        : `${patient.priorities.length} 項持續觀察`;
+  el.priorityList.innerHTML = patient.priorities
+    .map(
+      ([level, title, detail]) => `
+        <article class="priority-item ${level}">
+          <span class="priority-marker" aria-hidden="true"></span>
+          <div>
+            <strong>${title}</strong>
+            <p>${detail}</p>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderAttentionCards(patient) {
+  [
+    ["vital", el.vitalCard],
+    ["lab", el.labCard],
+    ["med", el.medCard],
+  ].forEach(([key, card]) => {
+    card.classList.toggle("attention", patient.attention.includes(key));
+    card.classList.toggle("critical", patient.risk === "high" && patient.attention.includes(key));
+  });
+}
+
 function syncDraftState(patient) {
   el.draftState.className = "state-chip";
   if (patient.rejected) {
@@ -313,7 +373,7 @@ function syncDraftState(patient) {
   }
 
   el.sendDraft.disabled = !patient.confirmed || patient.sent;
-  el.sendDraft.textContent = patient.sent ? "已送出 NIS" : "Send to NIS";
+  el.sendDraft.textContent = patient.sent ? "已送出 NIS" : "送出至 NIS";
 }
 
 function renderSources(patient) {
@@ -500,13 +560,6 @@ function addAudit(patient, detail) {
   patient.audit = [[time, detail], ...patient.audit].slice(0, 6);
 }
 
-function showToast(message) {
-  el.toast.textContent = message;
-  el.toast.classList.add("show");
-  window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => el.toast.classList.remove("show"), 2200);
-}
-
 function render() {
   renderPatients();
   renderDetail();
@@ -530,7 +583,6 @@ document.querySelectorAll(".nav-item").forEach((button) => {
     document.querySelectorAll(".view").forEach((view) => {
       view.classList.toggle("active", view.dataset.view === state.activeView);
     });
-    showToast(`切換到「${button.textContent}」畫面`);
   });
 });
 
@@ -570,14 +622,12 @@ el.confirmDraft.addEventListener("click", () => {
   patient.confirmed = true;
   patient.rejected = false;
   addAudit(patient, "護理師確認 AI 摘要");
-  showToast("摘要已確認，可送出至 NIS");
   render();
 });
 
 el.editDraft.addEventListener("click", () => {
   el.draftText.focus();
   el.draftText.setSelectionRange(el.draftText.value.length, el.draftText.value.length);
-  showToast("可直接在草稿欄位修改內容");
 });
 
 el.rejectDraft.addEventListener("click", () => {
@@ -586,19 +636,16 @@ el.rejectDraft.addEventListener("click", () => {
   patient.sent = false;
   patient.rejected = true;
   addAudit(patient, "護理師退回 AI 摘要");
-  showToast("摘要已退回，未寫入正式交班");
   render();
 });
 
 el.sendDraft.addEventListener("click", () => {
   const patient = selectedPatient();
   if (!patient.confirmed) {
-    showToast("需先確認摘要才能送出");
     return;
   }
   patient.sent = true;
   addAudit(patient, "摘要寫回 NIS 交班紀錄");
-  showToast("已送出至 NIS 交班紀錄");
   render();
 });
 
@@ -611,7 +658,6 @@ el.simulateUpdate.addEventListener("click", () => {
   patient.rejected = false;
   addAudit(patient, "資料更新後重新產生 AI 摘要");
   el.syncStatus.textContent = "資料同步：現在";
-  showToast("已模擬新資料同步");
   render();
 });
 
@@ -627,7 +673,6 @@ el.resetDemo.addEventListener("click", () => {
   el.timeRange.value = "48";
   document.querySelectorAll(".segment").forEach((item) => item.classList.toggle("active", item.dataset.risk === "all"));
   el.syncStatus.textContent = "資料同步：剛剛";
-  showToast("示範資料已重置");
   render();
 });
 
