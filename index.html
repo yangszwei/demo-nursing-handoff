@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 護理交班風險示範系統</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="side-rail" aria-label="主要導覽">
+        <div class="brand-mark">
+          <span class="brand-icon" aria-hidden="true">AI</span>
+          <div>
+            <strong>AI Handoff</strong>
+            <span>Risk Console</span>
+          </div>
+        </div>
+
+        <nav class="rail-nav" aria-label="功能">
+          <button class="nav-item active" type="button" data-nav="handoff">交班</button>
+          <button class="nav-item" type="button" data-nav="sources">來源</button>
+          <button class="nav-item" type="button" data-nav="audit">稽核</button>
+          <button class="nav-item" type="button" data-nav="rules">規則</button>
+        </nav>
+
+        <section class="shift-card" aria-label="班別資訊">
+          <span>內科 7A</span>
+          <strong>小夜班交班</strong>
+          <small>15:30 - 23:30</small>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="section-kicker">NIS 交班頁嵌入示範</p>
+            <h1>AI 輔助護理交班風險辨識</h1>
+          </div>
+          <div class="top-actions">
+            <label class="search-box">
+              <span aria-hidden="true">⌕</span>
+              <input id="patientSearch" type="search" placeholder="搜尋床號、姓名或診斷" />
+            </label>
+            <button id="resetDemo" class="ghost-button" type="button">重置</button>
+          </div>
+        </header>
+
+        <section class="view active" data-view="handoff" aria-label="交班畫面">
+          <section class="control-strip" aria-label="交班控制">
+            <div class="segmented" role="group" aria-label="風險篩選">
+              <button class="segment active" type="button" data-risk="all">全部</button>
+              <button class="segment" type="button" data-risk="high">高風險</button>
+              <button class="segment" type="button" data-risk="medium">中風險</button>
+              <button class="segment" type="button" data-risk="low">低風險</button>
+            </div>
+            <label class="field-control">
+              <span>資料區間</span>
+              <select id="timeRange">
+                <option value="24">近 24 小時</option>
+                <option value="48" selected>近 48 小時</option>
+                <option value="72">近 72 小時</option>
+              </select>
+            </label>
+            <label class="toggle-line">
+              <input id="onlyUnconfirmed" type="checkbox" />
+              <span>只看待確認</span>
+            </label>
+            <div class="sync-status" id="syncStatus">資料同步：剛剛</div>
+          </section>
+
+          <div class="dashboard-grid">
+            <section class="panel patient-panel" aria-label="病人清單">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Patients</p>
+                  <h2>病人清單</h2>
+                </div>
+                <span id="patientCount" class="count-pill">0</span>
+              </div>
+              <div id="patientList" class="patient-list"></div>
+            </section>
+
+            <section class="patient-detail" aria-live="polite">
+              <div class="detail-hero">
+                <div>
+                  <p class="panel-label">Selected Patient</p>
+                  <h2 id="patientName">-</h2>
+                  <div id="patientMeta" class="meta-line"></div>
+                </div>
+                <div id="riskBadge" class="risk-badge">-</div>
+              </div>
+
+              <section class="summary-grid" aria-label="臨床摘要">
+                <article class="metric-card">
+                  <span>生命徵象</span>
+                  <strong id="vitalMetric">-</strong>
+                  <small id="vitalTrend">-</small>
+                </article>
+                <article class="metric-card">
+                  <span>檢驗</span>
+                  <strong id="labMetric">-</strong>
+                  <small id="labTrend">-</small>
+                </article>
+                <article class="metric-card">
+                  <span>用藥</span>
+                  <strong id="medMetric">-</strong>
+                  <small id="medTrend">-</small>
+                </article>
+              </section>
+
+              <section class="panel flow-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-label">Risk Timeline</p>
+                    <h2>風險時間軸</h2>
+                  </div>
+                  <button id="simulateUpdate" class="icon-button" type="button" aria-label="模擬新資料">↻</button>
+                </div>
+                <div id="timeline" class="timeline"></div>
+              </section>
+
+              <section class="panel draft-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-label">AI Draft</p>
+                    <h2>AI 交班摘要草稿</h2>
+                  </div>
+                  <div id="draftState" class="state-chip">待確認</div>
+                </div>
+                <textarea id="draftText" spellcheck="false"></textarea>
+                <div class="draft-actions">
+                  <button id="confirmDraft" class="primary-button" type="button">Confirm</button>
+                  <button id="editDraft" class="secondary-button" type="button">Edit</button>
+                  <button id="rejectDraft" class="danger-button" type="button">退回</button>
+                  <button id="sendDraft" class="send-button" type="button">Send to NIS</button>
+                </div>
+              </section>
+            </section>
+
+            <aside class="inspector">
+              <section class="panel source-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-label">Sources</p>
+                    <h2>來源追蹤</h2>
+                  </div>
+                </div>
+                <div id="sourceList" class="source-list"></div>
+              </section>
+
+              <section class="panel rule-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-label">Rules</p>
+                    <h2>命中規則</h2>
+                  </div>
+                </div>
+                <div id="ruleHits" class="rule-list"></div>
+              </section>
+
+              <section class="panel audit-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="panel-label">Audit Trail</p>
+                    <h2>稽核紀錄</h2>
+                  </div>
+                </div>
+                <div id="auditTrail" class="audit-list"></div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="sources" aria-label="來源畫面">
+          <div class="page-grid">
+            <section class="panel data-panel wide-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Sources</p>
+                  <h2>來源資料總覽</h2>
+                </div>
+                <span id="sourceTotal" class="count-pill">0</span>
+              </div>
+              <div class="data-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>時間</th>
+                      <th>病人</th>
+                      <th>系統</th>
+                      <th>資料內容</th>
+                      <th>狀態</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sourceTable"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Data Quality</p>
+                  <h2>資料品質</h2>
+                </div>
+              </div>
+              <div id="sourceQuality" class="stat-stack"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="audit" aria-label="稽核畫面">
+          <div class="page-grid">
+            <section class="panel data-panel wide-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Audit Trail</p>
+                  <h2>稽核事件</h2>
+                </div>
+                <span id="auditTotal" class="count-pill">0</span>
+              </div>
+              <div class="data-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>時間</th>
+                      <th>病人</th>
+                      <th>事件</th>
+                      <th>操作者</th>
+                      <th>版本</th>
+                    </tr>
+                  </thead>
+                  <tbody id="auditTable"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Governance</p>
+                  <h2>治理狀態</h2>
+                </div>
+              </div>
+              <div id="governanceStats" class="stat-stack"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view="rules" aria-label="規則畫面">
+          <div class="page-grid">
+            <section class="panel data-panel wide-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Rules</p>
+                  <h2>臨床規則庫</h2>
+                </div>
+                <span id="ruleTotal" class="count-pill">0</span>
+              </div>
+              <div id="ruleCatalog" class="catalog-grid"></div>
+            </section>
+
+            <aside class="panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="panel-label">Rule Hits</p>
+                  <h2>本班命中分布</h2>
+                </div>
+              </div>
+              <div id="ruleDistribution" class="stat-stack"></div>
+            </aside>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
