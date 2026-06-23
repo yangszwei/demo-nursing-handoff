@@ -10,7 +10,12 @@
     <div id="app" class="app-shell">
       <aside class="side-rail" aria-label="主要導覽">
         <div class="brand-mark">
-          <span class="brand-icon" aria-hidden="true">AI</span>
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3.5 19 6v5.4c0 4.3-2.8 7.7-7 9.1-4.2-1.4-7-4.8-7-9.1V6l7-2.5Z" />
+              <path d="M8.5 12h7M12 8.5v7" />
+            </svg>
+          </span>
           <div>
             <strong>護理交班風險辨識</strong>
             <span>示範系統</span>
@@ -119,7 +124,12 @@
                   <div>
                     <h2>風險時間軸</h2>
                   </div>
-                  <button id="simulateUpdate" class="icon-button" type="button" aria-label="模擬新資料">↻</button>
+                  <button id="simulateUpdate" class="icon-button" type="button" aria-label="模擬新資料">
+                    <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                      <path d="M19 8.5A7.5 7.5 0 1 0 20.5 13" />
+                      <path d="M19 4.5v4h-4" />
+                    </svg>
+                  </button>
                 </div>
                 <div id="timeline" class="timeline"></div>
               </section>
