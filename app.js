@@ -157,6 +157,77 @@ const state = {
   timeRange: "48",
 };
 
+const liveUpdatePool = {
+  "701-2": [
+    {
+      title: "夜間 SpO₂ 監測回傳",
+      detail: "床邊監測顯示 03:10、03:20 連續兩筆 SpO₂ 91-92%，已同步至交班摘要。",
+      source: "床邊監測系統",
+    },
+    {
+      title: "氧氣需求更新",
+      detail: "凌晨氧流量由 3 L/min 調整至 4 L/min 後，SpO₂ 回升至 93%，持續觀察呼吸型態。",
+      source: "護理紀錄 / 床邊監測",
+    },
+    {
+      title: "發燒紀錄回補",
+      detail: "00:30 量測體溫 38.1°C，醫師已知會並保留退燒藥 PRN。",
+      source: "護理紀錄",
+    },
+  ],
+  "703-1": [
+    {
+      title: "床邊血糖回報",
+      detail: "06:00 POCT glucose 226 mg/dL，已依 sliding scale 給藥並記錄傷口換藥。",
+      source: "護理紀錄 / POCT",
+    },
+    {
+      title: "換藥後觀察",
+      detail: "換藥後傷口滲液量較前班減少，疼痛 3/10，無惡臭分泌物。",
+      source: "護理紀錄",
+    },
+    {
+      title: "餐前血糖追蹤",
+      detail: "11:45 餐前血糖 198 mg/dL，已提醒下一餐前再測並保留胰島素給藥紀錄。",
+      source: "POCT / 護理紀錄",
+    },
+  ],
+  "705-2": [
+    {
+      title: "夜間觀察完成",
+      detail: "凌晨無跌倒事件，夜間疼痛維持 2/10，床欄與呼叫鈴已再次確認。",
+      source: "護理紀錄",
+    },
+    {
+      title: "下床協助追蹤",
+      detail: "07:10 起床後步態穩定，已在旁協助如廁與步行，無暈眩訴說。",
+      source: "護理紀錄",
+    },
+    {
+      title: "止痛藥未使用",
+      detail: "本班 PRN 止痛藥仍未使用，疼痛維持輕微，持續跌倒預防。",
+      source: "用藥紀錄",
+    },
+  ],
+  "708-1": [
+    {
+      title: "補鉀醫囑回寫",
+      detail: "K 3.1 已補鉀 20 mEq，待 06:00 追蹤心電圖與尿量變化。",
+      source: "醫囑 / LIS",
+    },
+    {
+      title: "夜間呼吸喘紀錄",
+      detail: "01:40 呼吸喘較前班明顯，坐姿休息可緩解，已追加氧氣 2 L/min。",
+      source: "護理紀錄",
+    },
+    {
+      title: "尿量追蹤完成",
+      detail: "02:30 至 06:00 尿量共 720 mL，持續觀察利尿反應與體重變化。",
+      source: "輸出入紀錄",
+    },
+  ],
+};
+
 const el = {
   patientSearch: document.querySelector("#patientSearch"),
   resetDemo: document.querySelector("#resetDemo"),
@@ -651,8 +722,18 @@ el.sendDraft.addEventListener("click", () => {
 
 el.simulateUpdate.addEventListener("click", () => {
   const patient = selectedPatient();
-  patient.timeline = [["現在", "收到新資料", `系統重新擷取近 ${state.timeRange} 小時資料並更新風險摘要。`], ...patient.timeline].slice(0, 4);
-  patient.sources = [["系統", "現在", "示範模式：新增一筆同步事件。"], ...patient.sources].slice(0, 4);
+  const pool = liveUpdatePool[patient.id] ?? [
+    {
+      title: "交班資料回補",
+      detail: `系統重新擷取近 ${state.timeRange} 小時資料並更新風險摘要。`,
+      source: "交班系統",
+    },
+  ];
+  const currentIndex = patient.updateCount ?? 0;
+  const update = pool[currentIndex % pool.length];
+  patient.updateCount = currentIndex + 1;
+  patient.timeline = [["現在", update.title, update.detail], ...patient.timeline].slice(0, 4);
+  patient.sources = [["系統", "現在", `來源：${update.source}，已同步至交班摘要。`], ...patient.sources].slice(0, 4);
   patient.confirmed = false;
   patient.sent = false;
   patient.rejected = false;
